@@ -9,11 +9,12 @@ import com.typesafe.sbteclipse.core.EclipsePlugin.EclipseKeys
 
 object ApplicationBuild extends Build with UniversalKeys {
 
+  val SharedSrcDir = "scala"
+  val PlayStart = "playStart"
+
   val scalajsOutputDir = Def.settingKey[File]("directory for javascript files output by scalajs")
 
   override def rootProject = Some(scalajvm)
-
-  val sharedSrcDir = "scala"
 
   lazy val scalajvm = Project(
     id = "scalajvm",
@@ -27,7 +28,7 @@ object ApplicationBuild extends Build with UniversalKeys {
 
   lazy val sharedScala = Project(
     id = "sharedScala",
-    base = file(sharedSrcDir)
+    base = file(SharedSrcDir)
   ) settings (sharedScalaSettings: _*)
 
   lazy val scalajvmSettings =
@@ -41,7 +42,7 @@ object ApplicationBuild extends Build with UniversalKeys {
       stage <<= stage dependsOn (fullOptJS in (scalajs, Compile)),
       libraryDependencies ++= Dependencies.scalajvm.value,
       EclipseKeys.skipParents in ThisBuild := false,
-      commands += preStartCommand
+      commands ++= Seq(playStartCommand, startCommand)
     ) ++ (
       // ask scalajs project to put its outputs in scalajsOutputDir
       Seq(packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
@@ -67,10 +68,10 @@ object ApplicationBuild extends Build with UniversalKeys {
     )
 
   lazy val sharedDirectorySettings = Seq(
-    unmanagedSourceDirectories in Compile += new File((file(".") / sharedSrcDir / "src" / "main" / "scala").getCanonicalPath),
-    unmanagedSourceDirectories in Test += new File((file(".") / sharedSrcDir / "src" / "test" / "scala").getCanonicalPath),
-    unmanagedResourceDirectories in Compile += file(".") / sharedSrcDir / "src" / "main" / "resources",
-    unmanagedResourceDirectories in Test += file(".") / sharedSrcDir / "src" / "test" / "resources"
+    unmanagedSourceDirectories in Compile += new File((file(".") / SharedSrcDir / "src" / "main" / "scala").getCanonicalPath),
+    unmanagedSourceDirectories in Test += new File((file(".") / SharedSrcDir / "src" / "test" / "scala").getCanonicalPath),
+    unmanagedResourceDirectories in Compile += file(".") / SharedSrcDir / "src" / "main" / "resources",
+    unmanagedResourceDirectories in Test += file(".") / SharedSrcDir / "src" / "test" / "resources"
   )
 
   val copySourceMapsTask = Def.task {
@@ -81,17 +82,12 @@ object ApplicationBuild extends Build with UniversalKeys {
     }
   }
 
-  // Use reflection to rename the 'start' command to 'play-start'
-  Option(play.Play.playStartCommand.getClass.getDeclaredField("name")) map { field =>
-    field.setAccessible(true)
-    field.set(playStartCommand, "play-start")
-  }
-
-  // The new 'start' command optimises the JS before calling the Play 'start' renamed 'play-start'
-  val preStartCommand = Command.args("start", "<port>") { (state: State, args: Seq[String]) =>
+  // The new 'start' command optimises the JS before calling 'playStart'
+  val startCommand = Command.args("start", "<port>") { (state: State, args: Seq[String]) =>
     Project.runTask(fullOptJS in (scalajs, Compile), state)
-    state.copy(remainingCommands = ("play-start " + args.mkString(" ")) +: state.remainingCommands)
+    state.copy(remainingCommands = s"$PlayStart ${args.mkString(" ")}" +: state.remainingCommands)
   }
+  val playStartCommand = Command.make(PlayStart)(play.Play.playStartCommand.parser)
 }
 
 object Dependencies {
