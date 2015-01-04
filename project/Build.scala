@@ -94,6 +94,7 @@ object Dependencies {
   val shared = Def.setting(Seq())
 
   val scalajvm = Def.setting(shared.value ++ Seq(
+    "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0",
     "org.webjars" % "jquery" % "1.11.1"
   ))
 
