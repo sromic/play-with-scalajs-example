@@ -1,104 +1,38 @@
 import sbt._
 import Keys._
-import play.PlayScala
-import play.Play._
-import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import com.typesafe.sbt.packager.universal.UniversalKeys
-import com.typesafe.sbteclipse.core.EclipsePlugin.EclipseKeys
+import playscalajs.PlayScalaJS
 
-object ApplicationBuild extends Build with UniversalKeys {
+object ApplicationBuild extends Build {
 
-  val SharedSrcDir = "scala"
-  val PlayStart = "playStart"
+  override def rootProject = Some(jvm)
 
-  val scalajsOutputDir = Def.settingKey[File]("directory for javascript files output by scalajs")
-
-  override def rootProject = Some(scalajvm)
-
-  lazy val scalajvm = Project(
-    id = "scalajvm",
-    base = file("scalajvm")
-  ) enablePlugins (PlayScala) settings (scalajvmSettings: _*) aggregate (scalajs)
-
-  lazy val scalajs = Project(
-    id = "scalajs",
-    base = file("scalajs")
-  ) enablePlugins(ScalaJSPlugin) settings (scalajsSettings: _*)
-
-  lazy val sharedScala = Project(
-    id = "sharedScala",
-    base = file(SharedSrcDir)
-  ) settings (sharedScalaSettings: _*)
-
-  lazy val scalajvmSettings =
-    Seq(
-      name := "play-example",
-      version := Versions.app,
+  val example = PlayScalaJS("example", file(".")).
+    jvmSettings(
+      libraryDependencies ++= Dependencies.jvm.value
+    ).jsSettings(
+      libraryDependencies ++= Dependencies.js.value
+    ).settings(
       scalaVersion := Versions.scala,
-      scalajsOutputDir := (classDirectory in Compile).value / "public" / "javascripts",
-      compile in Compile <<= (compile in Compile) dependsOn (fastOptJS in (scalajs, Compile)) dependsOn copySourceMapsTask,
-      dist <<= dist dependsOn (fullOptJS in (scalajs, Compile)),
-      stage <<= stage dependsOn (fullOptJS in (scalajs, Compile)),
-      libraryDependencies ++= Dependencies.scalajvm.value,
-      EclipseKeys.skipParents in ThisBuild := false,
-      commands ++= Seq(playStartCommand, startCommand)
-    ) ++ (
-      // ask scalajs project to put its outputs in scalajsOutputDir
-      Seq(packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
-        crossTarget in (scalajs, Compile, packageJSKey) := scalajsOutputDir.value
-      }
-    ) ++ sharedDirectorySettings
-
-  lazy val scalajsSettings =
-    Seq(
-      name := "scalajs-example",
-      version := Versions.app,
-      scalaVersion := Versions.scala,
-      persistLauncher := true,
-      persistLauncher in Test := false,
-      relativeSourceMaps := true,
-      libraryDependencies ++= Dependencies.scalajs.value
-    ) ++ sharedDirectorySettings
-
-  lazy val sharedScalaSettings =
-    Seq(
-      name := "shared-scala-example",
       libraryDependencies ++= Dependencies.shared.value
     )
 
-  lazy val sharedDirectorySettings = Seq(
-    unmanagedSourceDirectories in Compile += new File((file(".") / SharedSrcDir / "src" / "main" / "scala").getCanonicalPath),
-    unmanagedSourceDirectories in Test += new File((file(".") / SharedSrcDir / "src" / "test" / "scala").getCanonicalPath),
-    unmanagedResourceDirectories in Compile += file(".") / SharedSrcDir / "src" / "main" / "resources",
-    unmanagedResourceDirectories in Test += file(".") / SharedSrcDir / "src" / "test" / "resources"
-  )
+  lazy val jvm = example.jvm
+  lazy val js = example.js
 
-  val copySourceMapsTask = Def.task {
-    val scalaFiles = (Seq(sharedScala.base, scalajs.base) ** ("*.scala")).get
-    for (scalaFile <- scalaFiles) {
-      val target = new File((classDirectory in Compile).value, scalaFile.getPath)
-      IO.copyFile(scalaFile, target)
-    }
-  }
-
-  // The new 'start' command optimises the JS before calling 'playStart'
-  val startCommand = Command.args("start", "<port>") { (state: State, args: Seq[String]) =>
-    Project.runTask(fullOptJS in (scalajs, Compile), state)
-    state.copy(remainingCommands = s"$PlayStart ${args.mkString(" ")}" +: state.remainingCommands)
-  }
-  val playStartCommand = Command.make(PlayStart)(play.Play.playStartCommand.parser)
+  // Only if you use IntelliJ: the shared project makes IntelliJ happy without using symlinks
+  lazy val shared = Project("exampleShared", file("shared"))
 }
 
 object Dependencies {
   val shared = Def.setting(Seq())
 
-  val scalajvm = Def.setting(shared.value ++ Seq(
+  val jvm = Def.setting(Seq(
     "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0",
     "org.webjars" % "jquery" % "1.11.1"
   ))
 
-  val scalajs = Def.setting(shared.value ++ Seq(
+  val js = Def.setting(Seq(
     "org.scala-js" %%% "scalajs-dom" % Versions.scalajsDom
   ))
 }
