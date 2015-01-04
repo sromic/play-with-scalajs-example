@@ -12,8 +12,3 @@ addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.4")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.0-M3")
 
 addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.4.0")
-
-resolvers += Resolver.url(
-  "bintray-sbt-plugin-releases",
-    url("http://dl.bintray.com/content/sbt/sbt-plugin-releases"))(
-        Resolver.ivyStylePatterns)
