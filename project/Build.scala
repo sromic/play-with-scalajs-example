@@ -28,8 +28,8 @@ object Dependencies {
   val shared = Def.setting(Seq())
 
   val jvm = Def.setting(Seq(
-    "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0",
-    "org.webjars" % "jquery" % "1.11.1"
+    "com.vmunier" %% "play-scalajs-sourcemaps" % Versions.playScalajsSourcemaps,
+    "org.webjars" % "jquery" % Versions.jquery
   ))
 
   val js = Def.setting(Seq(
@@ -41,4 +41,6 @@ object Versions {
   val app = "0.1.0-SNAPSHOT"
   val scala = "2.11.2"
   val scalajsDom = "0.7.0"
+  val jquery = "1.11.1"
+  val playScalajsSourcemaps = "0.1.0"
 }
