@@ -13,6 +13,7 @@ object ApplicationBuild extends Build {
     ).jsSettings(
       libraryDependencies ++= Dependencies.js.value
     ).settings(
+      version := Versions.app,
       scalaVersion := Versions.scala,
       libraryDependencies ++= Dependencies.shared.value
     )
