@@ -11,11 +11,6 @@ addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.4")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.0-M3")
 
-resolvers += Resolver.url(
-  "bintray-sbt-play-scalajs",
-    url("http://dl.bintray.com/content/vmunier/scalajs"))(
-        Resolver.ivyStylePatterns)
-
 addSbtPlugin("com.vmunier" % "sbt-play-scalajs" % "0.1.0")
 
 addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.4.0")
