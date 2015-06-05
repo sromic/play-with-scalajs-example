@@ -1,7 +1,7 @@
 import sbt.Project.projectToRef
 
 lazy val clients = Seq(exampleClient)
-lazy val scalaV = "2.11.5"
+lazy val scalaV = "2.11.6"
 
 lazy val exampleServer = (project in file("example-server")).settings(
   scalaVersion := scalaV,
